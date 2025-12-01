@@ -2,6 +2,7 @@ from inertia import render
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import redirect
 from django.views.decorators.http import require_POST, require_http_methods
+from django.contrib.auth.decorators import login_required
 from .forms import RegisterForm, LoginForm
 
 def login_view(request):
@@ -45,3 +46,14 @@ def register_action(request):
 def logout_action(request):
     logout(request)
     return redirect('home')
+
+@login_required
+def profile_view(request):
+    return render(request, 'Profile/Index', props={
+        'user': {
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+            'joined_at': request.user.date_joined.strftime('%Y-%m-%d'),
+        }
+    })
