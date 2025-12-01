@@ -65,3 +65,18 @@ if 'corsheaders' in INSTALLED_APPS:
     MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOW_CREDENTIALS = True
+
+# Override logging to use console only in development
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
