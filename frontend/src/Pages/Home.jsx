@@ -1,22 +1,46 @@
-```javascript
 import React from 'react'
-import { Head } from '@inertiajs/react'
+import { Link } from 'react-router-dom'
 import AppLayout from '../Components/Layout/AppLayout'
 
 export default function Home() {
     return (
         <AppLayout>
-            <Head title="Home" />
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-lg">
-                    <h1 className="text-4xl font-bold text-orange-600 mb-4">Welcome to TechMart</h1>
-                    <p className="text-gray-600">Your premium destination for phones and gadgets.</p>
-                    <button className="mt-6 bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition">
-                        Shop Now
-                    </button>
+            <div className="hero-section">
+                <div className="hero-content">
+                    <h1 className="hero-title">
+                        Welcome to <span className="brand-gradient">TechMart</span>
+                    </h1>
+                    <p className="hero-subtitle">
+                        Your premium destination for cutting-edge phones and gadgets
+                    </p>
+                    <div className="hero-actions">
+                        <Link to="/products" className="btn btn-primary">
+                            Shop Now
+                        </Link>
+                        <Link to="/products" className="btn btn-secondary">
+                            Browse Collection
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="featured-categories">
+                    <Link to="/products?category=phones" className="category-card">
+                        <div className="category-icon">📱</div>
+                        <h3>Smartphones</h3>
+                        <p>Latest flagship devices</p>
+                    </Link>
+                    <Link to="/products?category=laptops" className="category-card">
+                        <div className="category-icon">💻</div>
+                        <h3>Laptops</h3>
+                        <p>Powerful computing</p>
+                    </Link>
+                    <Link to="/products?category=accessories" className="category-card">
+                        <div className="category-icon">🎧</div>
+                        <h3>Accessories</h3>
+                        <p>Premium add-ons</p>
+                    </Link>
                 </div>
             </div>
         </AppLayout>
     )
 }
-```

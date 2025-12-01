@@ -1,85 +1,218 @@
 import React from 'react'
-import { Link } from '@inertiajs/react'
+import { Link } from 'react-router-dom'
 
-export default function CartItem({ item, updateQuantity, removeItem, processing }) {
+export default function CartItem({ item, updateQuantity, removeItem }) {
     return (
-        <li className="flex py-6 sm:py-10">
-            <div className="flex-shrink-0">
+        <div className="cart-item">
+            <div className="item-image">
                 {item.product.image ? (
                     <img
                         src={item.product.image}
                         alt={item.product.name}
-                        className="w-24 h-24 rounded-md object-center object-cover sm:w-48 sm:h-48"
                     />
                 ) : (
-                    <div className="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 sm:w-48 sm:h-48">
-                        No Image
+                    <div className="image-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
                     </div>
                 )}
             </div>
 
-            <div className="ml-4 flex-1 flex flex-col justify-between sm:ml-6">
-                <div className="relative pr-9 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:pr-0">
-                    <div>
-                        <div className="flex justify-between">
-                            <h3 className="text-sm">
-                                <Link href={`/products/${item.product.slug}/`} className="font-medium text-gray-700 hover:text-gray-800">
-                                    {item.product.name}
-                                </Link>
-                            </h3>
-                        </div>
-                        <div className="mt-1 flex text-sm">
-                            <p className="text-gray-500">{item.variant ? item.variant.name : 'Standard'}</p>
-                        </div>
-                        <p className="mt-1 text-sm font-medium text-gray-900">${item.price}</p>
+            <div className="item-details">
+                <div className="item-info">
+                    <Link to={`/products/${item.product.id}`} className="item-name">
+                        {item.product.name}
+                    </Link>
+                    {item.product.brand && (
+                        <p className="item-brand">{item.product.brand}</p>
+                    )}
+                    <p className="item-price">${item.product.price}</p>
+                </div>
+
+                <div className="item-actions">
+                    <div className="quantity-control">
+                        <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="qty-btn"
+                            disabled={item.quantity <= 1}
+                        >
+                            −
+                        </button>
+                        <span className="qty-value">{item.quantity}</span>
+                        <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="qty-btn"
+                        >
+                            +
+                        </button>
                     </div>
 
-                    <div className="mt-4 sm:mt-0 sm:pr-9">
-                        <label htmlFor={`quantity-${item.id}`} className="sr-only">
-                            Quantity, {item.product.name}
-                        </label>
-                        <div className="flex items-center border border-gray-300 rounded-md w-32">
-                            <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                                disabled={processing}
-                            >
-                                -
-                            </button>
-                            <input
-                                id={`quantity-${item.id}`}
-                                name={`quantity-${item.id}`}
-                                value={item.quantity}
-                                readOnly
-                                className="w-full text-center border-none focus:ring-0 p-1"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                                disabled={processing}
-                            >
-                                +
-                            </button>
-                        </div>
+                    <button
+                        onClick={() => removeItem(item.id)}
+                        className="remove-btn"
+                        title="Remove item"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
 
-                        <div className="absolute top-0 right-0">
-                            <button
-                                type="button"
-                                onClick={() => removeItem(item.id)}
-                                className="-m-2 p-2 inline-flex text-gray-400 hover:text-gray-500"
-                                disabled={processing}
-                            >
-                                <span className="sr-only">Remove</span>
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                <div className="item-subtotal">
+                    <span className="subtotal-label">Subtotal:</span>
+                    <span className="subtotal-value">${item.subtotal.toFixed(2)}</span>
                 </div>
             </div>
-        </li>
+
+            <style jsx="true">{`
+                .cart-item {
+                    display: flex;
+                    gap: var(--spacing-lg);
+                    padding: var(--spacing-lg);
+                    background: var(--bg-secondary);
+                    border-radius: var(--radius-lg);
+                    box-shadow: var(--shadow-sm);
+                }
+                
+                .item-image {
+                    flex-shrink: 0;
+                    width: 120px;
+                    height: 120px;
+                    border-radius: var(--radius-md);
+                    overflow: hidden;
+                    background: var(--bg-primary);
+                }
+                
+                .item-image img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                
+                .image-placeholder {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--text-muted);
+                }
+                
+                .item-details {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-md);
+                }
+                
+                .item-name {
+                    font-size: var(--font-size-lg);
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    text-decoration: none;
+                    transition: color var(--transition-fast);
+                }
+                
+                .item-name:hover {
+                    color: var(--primary);
+                }
+                
+                .item-brand {
+                    font-size: var(--font-size-sm);
+                    color: var(--text-muted);
+                }
+                
+                .item-price {
+                    font-size: var(--font-size-base);
+                    color: var(--text-secondary);
+                    margin-top: var(--spacing-xs);
+                }
+                
+                .item-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-md);
+                }
+                
+                .quantity-control {
+                    display: flex;
+                    align-items: center;
+                    border: 1px solid var(--border-light);
+                    border-radius: var(--radius-md);
+                    overflow: hidden;
+                }
+                
+                .qty-btn {
+                    width: 36px;
+                    height: 36px;
+                    border: none;
+                    background: var(--bg-secondary);
+                    cursor: pointer;
+                    font-size: var(--font-size-lg);
+                    transition: background var(--transition-fast);
+                }
+                
+                .qty-btn:hover:not(:disabled) {
+                    background: var(--bg-primary);
+                }
+                
+                .qty-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                
+                .qty-value {
+                    min-width: 50px;
+                    text-align: center;
+                    font-weight: 600;
+                }
+                
+                .remove-btn {
+                    padding: var(--spacing-xs);
+                    border: none;
+                    background: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    transition: color var(--transition-fast);
+                }
+                
+                .remove-btn:hover {
+                    color: var(--error);
+                }
+                
+                .item-subtotal {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: auto;
+                    padding-top: var(--spacing-md);
+                    border-top: 1px solid var(--border-light);
+                }
+                
+                .subtotal-label {
+                    color: var(--text-secondary);
+                    font-size: var(--font-size-sm);
+                }
+                
+                .subtotal-value {
+                    font-size: var(--font-size-xl);
+                    font-weight: 700;
+                    color: var(--primary);
+                }
+                
+                @media (max-width: 640px) {
+                    .cart-item {
+                        flex-direction: column;
+                    }
+                    
+                    .item-image {
+                        width: 100%;
+                    }
+                }
+            `}</style>
+        </div>
     )
 }
