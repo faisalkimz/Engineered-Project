@@ -60,11 +60,9 @@ DEBUG_TOOLBAR_CONFIG = {
 # Allow all hosts in development
 ALLOWED_HOSTS = ['*']
 
-# CORS for development (if frontend runs on different port)
-if 'corsheaders' in INSTALLED_APPS:
-    MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOW_CREDENTIALS = True
+# CORS for development (frontend runs on different port)
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # Override logging to use console only in development
 LOGGING = {

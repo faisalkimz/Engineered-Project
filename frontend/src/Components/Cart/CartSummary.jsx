@@ -78,7 +78,7 @@ export default function CartSummary({ total }) {
                 .summary-list {
                     display: flex;
                     flex-direction: column;
-                    gap: var (--spacing-md);
+                    gap: var(--spacing-md);
                     margin-bottom: var(--spacing-xl);
                 }
                 
