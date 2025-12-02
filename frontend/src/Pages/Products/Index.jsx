@@ -3,111 +3,118 @@ import { useSearchParams } from 'react-router-dom'
 import AppLayout from '../../Components/Layout/AppLayout'
 import ProductGrid from '../../Components/Products/ProductGrid'
 import ProductFilter from '../../Components/Products/ProductFilter'
-
-// Mock products data
-const mockProducts = [
-    {
-        id: 1,
-        name: 'iPhone 15 Pro Max',
-        brand: 'Apple',
-        price: 1199,
-        oldPrice: 1299,
-        discount: 8,
-        image: 'https://images.unsplash.com/photo-1696446702463-69e2e6498430?w=500',
-        rating: 5,
-        reviews: 234,
-        category: 'phones'
-    },
-    {
-        id: 2,
-        name: 'Samsung Galaxy S24 Ultra',
-        brand: 'Samsung',
-        price: 1099,
-        image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500',
-        rating: 5,
-        reviews: 189,
-        category: 'phones'
-    },
-    {
-        id: 3,
-        name: 'MacBook Pro 16" M3',
-        brand: 'Apple',
-        price: 2499,
-        oldPrice: 2699,
-        discount: 7,
-        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500',
-        rating: 5,
-        reviews: 456,
-        category: 'laptops'
-    },
-    {
-        id: 4,
-        name: 'Dell XPS 15',
-        brand: 'Dell',
-        price: 1799,
-        image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500',
-        rating: 4,
-        reviews: 321,
-        category: 'laptops'
-    },
-    {
-        id: 5,
-        name: 'AirPods Pro (2nd Gen)',
-        brand: 'Apple',
-        price: 249,
-        image: 'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=500',
-        rating: 5,
-        reviews: 789,
-        category: 'accessories'
-    },
-    {
-        id: 6,
-        name: 'Sony WH-1000XM5',
-        brand: 'Sony',
-        price: 399,
-        oldPrice: 449,
-        discount: 11,
-        image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcf?w=500',
-        rating: 5,
-        reviews: 543,
-        category: 'accessories'
-    },
-    {
-        id: 7,
-        name: 'Google Pixel 8 Pro',
-        brand: 'Google',
-        price: 999,
-        image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500',
-        rating: 4,
-        reviews: 267,
-        category: 'phones'
-    },
-    {
-        id: 8,
-        name: 'iPad Pro 12.9"',
-        brand: 'Apple',
-        price: 1099,
-        image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500',
-        rating: 5,
-        reviews: 412,
-        category: 'accessories'
-    }
-]
-
-const categories = [
-    { id: 'all', name: 'All Products', count: mockProducts.length },
-    { id: 'phones', name: 'Smartphones', count: mockProducts.filter(p => p.category === 'phones').length },
-    { id: 'laptops', name: 'Laptops', count: mockProducts.filter(p => p.category === 'laptops').length },
-    { id: 'accessories', name: 'Accessories', count: mockProducts.filter(p => p.category === 'accessories').length }
-]
+import { useProducts, useCategories } from '../../hooks/useAPI'
 
 export default function ProductsIndex() {
-    const [searchParams] = useSearchParams()
-    const categoryParam = searchParams.get('category') || 'all'
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [sortBy, setSortBy] = useState('featured')
 
-    const filteredProducts = categoryParam === 'all'
-        ? mockProducts
-        : mockProducts.filter(p => p.category === categoryParam)
+    // Get filter params from URL
+    const category = searchParams.get('category') || ''
+    const search = searchParams.get('search') || ''
+    const minPrice = searchParams.get('min_price') || ''
+    const maxPrice = searchParams.get('max_price') || ''
+    const brand = searchParams.get('brand') || ''
+
+    // Fetch data
+    const { data: productsData, isLoading, error } = useProducts({
+        category,
+        search,
+        min_price: minPrice,
+        max_price: maxPrice,
+        brand,
+        ordering: sortBy,
+    })
+
+    const { data: categoriesData } = useCategories()
+
+    const handleSortChange = (e) => {
+        setSortBy(e.target.value)
+    }
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <AppLayout>
+                <div className="loading-container">
+                    <div className="spinner"></div>
+                    <p>Loading amazing products...</p>
+                </div>
+
+                <style jsx="true">{`
+                    .loading-container {
+                        min-height: 60vh;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: var(--spacing-md);
+                    }
+
+                    .spinner {
+                        width: 50px;
+                        height: 50px;
+                        border: 4px solid var(--border-light);
+                        border-top-color: var(--primary);
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    }
+
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+
+                    .loading-container p {
+                        color: var(--text-secondary);
+                        font-size: var(--font-size-lg);
+                    }
+                `}</style>
+            </AppLayout>
+        )
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <AppLayout>
+                <div className="error-container">
+                    <div className="error-icon">⚠️</div>
+                    <h2>Oops! Something went wrong</h2>
+                    <p>{error.message || 'Failed to load products'}</p>
+                    <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                        Try Again
+                    </button>
+                </div>
+
+                <style jsx="true">{`
+                    .error-container {
+                        min-height: 60vh;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: var(--spacing-md);
+                        text-align: center;
+                    }
+
+                    .error-icon {
+                        font-size: 4rem;
+                    }
+
+                    .error-container h2 {
+                        color: var(--text-primary);
+                    }
+
+                    .error-container p {
+                        color: var(--text-secondary);
+                    }
+                `}</style>
+            </AppLayout>
+        )
+    }
+
+    const products = productsData?.results || []
+    const totalCount = productsData?.count || 0
 
     return (
         <AppLayout>
@@ -123,25 +130,38 @@ export default function ProductsIndex() {
                     <div className="products-layout">
                         <aside className="filters-sidebar">
                             <ProductFilter
-                                categories={categories}
-                                currentCategory={categoryParam}
+                                categories={categoriesData?.categories || []}
+                                currentCategory={category}
                             />
                         </aside>
 
                         <div className="products-content">
                             <div className="products-header">
                                 <p className="products-count">
-                                    {filteredProducts.length} products found
+                                    {totalCount} product{totalCount !== 1 ? 's' : ''} found
                                 </p>
-                                <select className="sort-select">
+                                <select
+                                    className="sort-select"
+                                    value={sortBy}
+                                    onChange={handleSortChange}
+                                >
                                     <option value="featured">Featured</option>
-                                    <option value="price-low">Price: Low to High</option>
-                                    <option value="price-high">Price: High to Low</option>
-                                    <option value="rating">Highest Rated</option>
+                                    <option value="price">Price: Low to High</option>
+                                    <option value="-price">Price: High to Low</option>
+                                    <option value="-average_rating">Highest Rated</option>
+                                    <option value="-created_at">Newest First</option>
                                 </select>
                             </div>
 
-                            <ProductGrid products={filteredProducts} />
+                            {products.length > 0 ? (
+                                <ProductGrid products={products} />
+                            ) : (
+                                <div className="no-products">
+                                    <div className="no-products-icon">🔍</div>
+                                    <h3>No products found</h3>
+                                    <p>Try adjusting your filters or search terms</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -161,6 +181,10 @@ export default function ProductsIndex() {
                 .page-title {
                     font-size: var(--font-size-4xl);
                     margin-bottom: var(--spacing-sm);
+                    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
                 }
                 
                 .page-subtitle {
@@ -192,6 +216,7 @@ export default function ProductsIndex() {
                 .products-count {
                     color: var(--text-secondary);
                     font-size: var(--font-size-sm);
+                    font-weight: 500;
                 }
                 
                 .sort-select {
@@ -202,12 +227,36 @@ export default function ProductsIndex() {
                     color: var(--text-primary);
                     background: var(--bg-secondary);
                     cursor: pointer;
-                    transition: border-color var(--transition-fast);
+                    transition: all var(--transition-fast);
+                }
+                
+                .sort-select:hover {
+                    border-color: var(--primary);
                 }
                 
                 .sort-select:focus {
                     outline: none;
                     border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+
+                .no-products {
+                    text-align: center;
+                    padding: var(--spacing-3xl) var(--spacing-xl);
+                }
+
+                .no-products-icon {
+                    font-size: 4rem;
+                    margin-bottom: var(--spacing-md);
+                }
+
+                .no-products h3 {
+                    color: var(--text-primary);
+                    margin-bottom: var(--spacing-sm);
+                }
+
+                .no-products p {
+                    color: var(--text-secondary);
                 }
                 
                 @media (max-width: 1024px) {
@@ -217,6 +266,22 @@ export default function ProductsIndex() {
                     
                     .filters-sidebar {
                         position: static;
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .page-title {
+                        font-size: var(--font-size-3xl);
+                    }
+
+                    .products-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: var(--spacing-sm);
+                    }
+
+                    .sort-select {
+                        width: 100%;
                     }
                 }
             `}</style>
