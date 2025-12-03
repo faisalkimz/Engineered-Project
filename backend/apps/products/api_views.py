@@ -65,6 +65,24 @@ def product_list_api(request):
         avg_rating = product.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
         review_count = product.reviews.count()
         
+        # Generate placeholder image if no image exists
+        image_url = None
+        if primary_image:
+            image_url = request.build_absolute_uri(primary_image.image.url)
+        else:
+            # Use category-specific placeholder images from Unsplash
+            placeholders = {
+                'smartphones': 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
+                'laptops': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
+                'tablets': 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400',
+                'smartwatches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+                'headphones': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+                'cameras': 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400',
+                'gaming': 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=400',
+                'tvs': 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400',
+            }
+            image_url = placeholders.get(product.category.slug, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400')
+        
         products_data.append({
             'id': product.id,
             'name': product.name,
@@ -72,7 +90,7 @@ def product_list_api(request):
             'price': float(product.price),
             'compare_at_price': float(product.compare_at_price) if product.compare_at_price else None,
             'discount_percent': int(((float(product.compare_at_price) - float(product.price)) / float(product.compare_at_price)) * 100) if product.compare_at_price else 0,
-            'image': request.build_absolute_uri(primary_image.image.url) if primary_image else None,
+            'image': image_url,
             'category': product.category.name,
             'category_slug': product.category.slug,
             'brand': product.brand.name if product.brand else None,
@@ -85,7 +103,9 @@ def product_list_api(request):
         })
     
     return JsonResponse({
-        'products': products_data,
+        'results': products_data,  # For pagination compatibility
+        'products': products_data,  # For direct access
+        'count': paginator.count,  # Total count
         'pagination': {
             'total': paginator.count,
             'per_page': per_page,
@@ -262,13 +282,30 @@ def featured_products_api(request):
         primary_image = product.images.filter(is_primary=True).first() or product.images.first()
         avg_rating = product.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
         
+        # Generate placeholder image if no image exists
+        image_url = None
+        if primary_image:
+            image_url = request.build_absolute_uri(primary_image.image.url)
+        else:
+            placeholders = {
+                'smartphones': 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
+                'laptops': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400',
+                'tablets': 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400',
+                'smartwatches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+                'headphones': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+                'cameras': 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400',
+                'gaming': 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=400',
+                'tvs': 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400',
+            }
+            image_url = placeholders.get(product.category.slug, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400')
+        
         products_data.append({
             'id': product.id,
             'name': product.name,
             'slug': product.slug,
             'price': float(product.price),
             'compare_at_price': float(product.compare_at_price) if product.compare_at_price else None,
-            'image': request.build_absolute_uri(primary_image.image.url) if primary_image else None,
+            'image': image_url,
             'category': product.category.name,
             'brand': product.brand.name if product.brand else None,
             'rating': round(avg_rating, 1),
