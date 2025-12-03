@@ -4,10 +4,14 @@ import AppLayout from '../../Components/Layout/AppLayout'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 
+import { ordersAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
+
 export default function CheckoutIndex() {
     const navigate = useNavigate()
-    const { cart, getCartTotal, clearCart } = useCart()
+    const { cart, clearCart } = useCart()
     const { isAuthenticated, user } = useAuth()
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const [step, setStep] = useState(1) // 1: Shipping, 2: Payment, 3: Review
     const [shippingInfo, setShippingInfo] = useState({
@@ -25,7 +29,8 @@ export default function CheckoutIndex() {
     const [saveInfo, setSaveInfo] = useState(false)
     const [agreedToTerms, setAgreedToTerms] = useState(false)
 
-    const subtotal = getCartTotal()
+    const cartItems = cart.items || []
+    const subtotal = cart.total || 0
     const shipping = subtotal > 50 ? 0 : 10
     const tax = subtotal * 0.075 // 7.5% VAT
     const total = subtotal + shipping + tax
@@ -40,13 +45,39 @@ export default function CheckoutIndex() {
         setStep(3)
     }
 
-    const handlePlaceOrder = () => {
-        // In a real app, this would process the payment
-        clearCart()
-        navigate('/checkout/success')
+    const handlePlaceOrder = async () => {
+        setIsSubmitting(true)
+        try {
+            const orderData = {
+                shipping_address: {
+                    full_name: shippingInfo.fullName,
+                    address_line1: shippingInfo.address,
+                    city: shippingInfo.city,
+                    state: shippingInfo.state,
+                    postal_code: shippingInfo.zipCode,
+                    country: shippingInfo.country,
+                    phone: shippingInfo.phone,
+                    email: shippingInfo.email
+                },
+                payment_method: paymentMethod
+            }
+
+            const response = await ordersAPI.createOrder(orderData)
+
+            if (response.success) {
+                clearCart()
+                toast.success('Order placed successfully!')
+                navigate('/checkout/success')
+            }
+        } catch (error) {
+            console.error('Order creation failed:', error)
+            toast.error(error.response?.data?.error || 'Failed to place order. Please try again.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
         return (
             <AppLayout>
                 <div className="empty-cart-page">
@@ -422,7 +453,7 @@ export default function CheckoutIndex() {
                                 <h3 className="summary-title">Order Summary</h3>
 
                                 <div className="summary-items">
-                                    {cart.map((item) => (
+                                    {cartItems.map((item) => (
                                         <div key={item.id} className="summary-item">
                                             <img src={item.image || 'https://via.placeholder.com/60'} alt={item.name} />
                                             <div className="item-details">

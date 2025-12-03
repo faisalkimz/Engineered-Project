@@ -1,6 +1,9 @@
 import React from 'react'
 import Header from './Header'
 import Footer from './Footer'
+import QuickViewModal from '../Products/QuickViewModal'
+import LiveChatWidget from '../Common/LiveChatWidget'
+import BackToTop from '../Common/BackToTop'
 
 export default function AppLayout({ children }) {
     return (
@@ -11,6 +14,11 @@ export default function AppLayout({ children }) {
                     {children}
                 </main>
                 <Footer />
+
+                {/* Global Components */}
+                <QuickViewModal />
+                <LiveChatWidget />
+                <BackToTop />
             </div>
 
             <style jsx="true">{`

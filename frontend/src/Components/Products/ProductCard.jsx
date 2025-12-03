@@ -1,9 +1,24 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useQuickView } from '../../context/QuickViewContext'
+import { useWishlist } from '../../context/WishlistContext'
 
 export default function ProductCard({ product }) {
+    const { openQuickView } = useQuickView()
+    const { addToWishlist, isInWishlist } = useWishlist()
+
+    const handleQuickView = (e) => {
+        e.preventDefault()
+        openQuickView(product)
+    }
+
+    const handleWishlist = (e) => {
+        e.preventDefault()
+        addToWishlist(product)
+    }
+
     return (
-        <Link to={`/products/${product.id}`} className="product-card">
+        <Link to={`/products/${product.slug || product.id}`} className="product-card group">
             <div className="product-image-container">
                 {product.image ? (
                     <img
@@ -20,8 +35,32 @@ export default function ProductCard({ product }) {
                         </svg>
                     </div>
                 )}
-                {product.discount && (
-                    <div className="product-badge">-{product.discount}%</div>
+
+                {/* Overlay Buttons */}
+                <div className="card-overlay">
+                    <button
+                        className="overlay-btn"
+                        onClick={handleQuickView}
+                        title="Quick View"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <button
+                        className={`overlay-btn ${isInWishlist(product.id) ? 'active' : ''}`}
+                        onClick={handleWishlist}
+                        title="Add to Wishlist"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                {(product.discount_percent > 0 || product.discount) && (
+                    <div className="product-badge">-{product.discount_percent || product.discount}%</div>
                 )}
             </div>
             <div className="product-info">
@@ -37,12 +76,12 @@ export default function ProductCard({ product }) {
                             </span>
                         ))}
                     </div>
-                    <span className="rating-count">({product.reviews || 0})</span>
+                    <span className="rating-count">({product.review_count || product.reviews || 0})</span>
                 </div>
                 <div className="product-price">
-                    <span className="price-current">${product.price}</span>
-                    {product.oldPrice && (
-                        <span className="price-old">${product.oldPrice}</span>
+                    <span className="price-current">${product.price.toFixed(2)}</span>
+                    {(product.compare_at_price || product.oldPrice) && (
+                        <span className="price-old">${(product.compare_at_price || product.oldPrice).toFixed(2)}</span>
                     )}
                 </div>
             </div>
@@ -57,6 +96,7 @@ export default function ProductCard({ product }) {
                     transition: all var(--transition-base);
                     text-decoration: none;
                     color: var(--text-primary);
+                    position: relative;
                 }
                 
                 .product-card:hover {
@@ -80,10 +120,59 @@ export default function ProductCard({ product }) {
                     height: 100%;
                     object-fit: cover;
                     transition: transform var(--transition-base);
+                    mix-blend-mode: multiply;
                 }
                 
                 .product-card:hover .product-image {
                     transform: scale(1.05);
+                }
+                
+                .card-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.1);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: var(--spacing-sm);
+                    opacity: 0;
+                    transition: opacity var(--transition-base);
+                }
+
+                .product-card:hover .card-overlay {
+                    opacity: 1;
+                }
+
+                .overlay-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: white;
+                    border: none;
+                    color: var(--text-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transform: translateY(20px);
+                    transition: all var(--transition-base);
+                    box-shadow: var(--shadow-md);
+                }
+
+                .product-card:hover .overlay-btn {
+                    transform: translateY(0);
+                }
+
+                .overlay-btn:hover {
+                    background: var(--primary);
+                    color: white;
+                }
+
+                .overlay-btn.active {
+                    color: var(--accent);
                 }
                 
                 .product-image-placeholder {
@@ -102,12 +191,13 @@ export default function ProductCard({ product }) {
                     position: absolute;
                     top: var(--spacing-sm);
                     right: var(--spacing-sm);
-                    background: var(--error);
+                    background: var(--accent);
                     color: white;
                     padding: var(--spacing-xs) var(--spacing-sm);
                     border-radius: var(--radius-md);
                     font-size: var(--font-size-xs);
                     font-weight: 700;
+                    z-index: 2;
                 }
                 
                 .product-info {
@@ -133,6 +223,7 @@ export default function ProductCard({ product }) {
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     line-height: 1.4;
+                    height: 2.8em;
                 }
                 
                 .product-rating {
@@ -153,7 +244,7 @@ export default function ProductCard({ product }) {
                 }
                 
                 .star.filled {
-                    color: hsl(45, 100%, 51%);
+                    color: #fbbf24;
                 }
                 
                 .rating-count {

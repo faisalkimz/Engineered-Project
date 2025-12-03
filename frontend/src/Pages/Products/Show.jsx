@@ -1,7 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useWishlist } from '../../context/WishlistContext'
+import { useRecentlyViewed } from '../../context/RecentlyViewedContext'
 import AppLayout from '../../Components/Layout/AppLayout'
+import SocialShare from '../../Components/Common/SocialShare'
+import ProductCard from '../../Components/Products/ProductCard'
 
 // Mock product detail data
 const mockProductDetails = {
@@ -42,6 +46,8 @@ export default function ProductShow() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
+  const { addToWishlist, isInWishlist } = useWishlist()
+  const { addToRecentlyViewed } = useRecentlyViewed()
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState(0)
   const [quantity, setQuantity] = useState(1)
@@ -49,11 +55,43 @@ export default function ProductShow() {
 
   const product = mockProductDetails[id] || mockProductDetails[1] // Fallback to first product
 
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        brand: product.brand
+      })
+    }
+  }, [product, id])
+
   const handleAddToCart = () => {
     addToCart(product, quantity)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
   }
+
+  // Mock frequently bought together products
+  const frequentProducts = [
+    {
+      id: 101,
+      name: 'MagSafe Case',
+      price: 49.99,
+      image: 'https://images.unsplash.com/photo-1603351154351-5cf99bc5f16d?w=400',
+      rating: 4.5,
+      reviews: 128
+    },
+    {
+      id: 102,
+      name: 'Screen Protector',
+      price: 19.99,
+      image: 'https://images.unsplash.com/photo-1603351154351-5cf99bc5f16d?w=400', // Placeholder
+      rating: 4.2,
+      reviews: 85
+    }
+  ]
 
   return (
     <AppLayout>
@@ -70,11 +108,12 @@ export default function ProductShow() {
           <div className="product-detail">
             {/* Image Gallery */}
             <div className="product-gallery">
-              <div className="main-image">
+              <div className="main-image group">
                 <img
                   src={product.images[selectedImage]}
                   alt={product.name}
                 />
+                <div className="zoom-hint">Hover to Zoom</div>
               </div>
               <div className="thumbnail-grid">
                 {product.images.map((img, index) => (
@@ -173,10 +212,21 @@ export default function ProductShow() {
                   >
                     Add to Cart
                   </button>
-                  <button className="btn-wishlist">
-                    ❤️
+                  <button
+                    className={`btn-wishlist ${isInWishlist(product.id) ? 'active' : ''}`}
+                    onClick={() => addToWishlist(product)}
+                    title="Add to Wishlist"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
                   </button>
                 </div>
+              </div>
+
+              {/* Social Share */}
+              <div className="social-share-section">
+                <SocialShare title={product.name} />
               </div>
 
               {/* Stock Status */}
@@ -202,6 +252,44 @@ export default function ProductShow() {
                   </dl>
                 </div>
               )}
+
+              {/* Shipping Info */}
+              <div className="shipping-info">
+                <h3 className="section-title">Shipping & Delivery</h3>
+                <div className="shipping-grid">
+                  <div className="shipping-item">
+                    <div className="shipping-icon">🚚</div>
+                    <div className="shipping-details">
+                      <h4>Free Delivery</h4>
+                      <p>Orders over $50</p>
+                    </div>
+                  </div>
+                  <div className="shipping-item">
+                    <div className="shipping-icon">⏱️</div>
+                    <div className="shipping-details">
+                      <h4>Estimated Delivery</h4>
+                      <p>3-5 Business Days</p>
+                    </div>
+                  </div>
+                  <div className="shipping-item">
+                    <div className="shipping-icon">🛡️</div>
+                    <div className="shipping-details">
+                      <h4>Warranty</h4>
+                      <p>1 Year Official Warranty</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Frequently Bought Together */}
+          <div className="frequently-bought-section">
+            <h2 className="section-title-lg">Frequently Bought Together</h2>
+            <div className="frequent-grid">
+              {frequentProducts.map(p => (
+                <ProductCard key={p.id} product={p} />
+              ))}
             </div>
           </div>
         </div>
@@ -250,6 +338,7 @@ export default function ProductShow() {
                     padding: var(--spacing-2xl);
                     border-radius: var(--radius-xl);
                     box-shadow: var(--shadow-lg);
+                    margin-bottom: var(--spacing-3xl);
                 }
                 
                 .main-image {
@@ -259,12 +348,38 @@ export default function ProductShow() {
                     overflow: hidden;
                     background: var(--bg-primary);
                     margin-bottom: var(--spacing-md);
+                    position: relative;
                 }
                 
                 .main-image img {
                     width: 100%;
                     height: 100%;
-                    object-fit: cover;
+                    object-fit: contain;
+                    transition: transform 0.3s ease;
+                }
+
+                .main-image:hover img {
+                    transform: scale(1.5);
+                    cursor: zoom-in;
+                }
+
+                .zoom-hint {
+                    position: absolute;
+                    bottom: var(--spacing-md);
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0,0,0,0.6);
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: var(--radius-full);
+                    font-size: var(--font-size-xs);
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                    pointer-events: none;
+                }
+
+                .main-image:hover .zoom-hint {
+                    opacity: 1;
                 }
                 
                 .thumbnail-grid {
@@ -471,14 +586,24 @@ export default function ProductShow() {
                     border: 2px solid var(--border-light);
                     border-radius: var(--radius-lg);
                     background: var(--bg-secondary);
-                    font-size: var(--font-size-xl);
+                    color: var(--text-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     cursor: pointer;
                     transition: all var(--transition-fast);
                 }
                 
                 .btn-wishlist:hover {
                     border-color: var(--error);
+                    color: var(--error);
                     background: rgba(239, 68, 68, 0.05);
+                }
+
+                .btn-wishlist.active {
+                    background: var(--error);
+                    border-color: var(--error);
+                    color: white;
                 }
                 
                 .stock-status {
@@ -521,6 +646,62 @@ export default function ProductShow() {
                 .spec-item dd {
                     color: var(--text-primary);
                     font-size: var(--font-size-sm);
+                }
+
+                .shipping-info {
+                    padding-top: var(--spacing-lg);
+                    border-top: 1px solid var(--border-light);
+                }
+
+                .shipping-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: var(--spacing-md);
+                }
+
+                .shipping-item {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-sm);
+                    padding: var(--spacing-sm);
+                    background: var(--bg-primary);
+                    border-radius: var(--radius-md);
+                }
+
+                .shipping-icon {
+                    font-size: 1.5rem;
+                }
+
+                .shipping-details h4 {
+                    font-size: var(--font-size-xs);
+                    font-weight: 700;
+                    margin: 0;
+                }
+
+                .shipping-details p {
+                    font-size: 10px;
+                    color: var(--text-secondary);
+                    margin: 0;
+                }
+
+                .social-share-section {
+                    padding-top: var(--spacing-lg);
+                    border-top: 1px solid var(--border-light);
+                }
+
+                .frequently-bought-section {
+                    margin-top: var(--spacing-3xl);
+                }
+
+                .section-title-lg {
+                    font-size: var(--font-size-2xl);
+                    margin-bottom: var(--spacing-xl);
+                }
+
+                .frequent-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: var(--spacing-lg);
                 }
                 
                 .toast-notification {

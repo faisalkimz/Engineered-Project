@@ -1,13 +1,31 @@
 import React from 'react'
 import AppLayout from '../../Components/Layout/AppLayout'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 export default function ProfileIndex() {
-    // Mock user data for now
-    const user = {
-        name: 'Demo User',
-        email: 'demo@example.com',
-        joined: 'December 2023'
+    const { user, logout } = useAuth()
+    const navigate = useNavigate()
+
+    const handleLogout = () => {
+        logout()
+        navigate('/')
+    }
+
+    if (!user) {
+        return (
+            <AppLayout>
+                <div className="profile-page">
+                    <div className="container">
+                        <div className="empty-state">
+                            <h2>Please Log In</h2>
+                            <p>You need to be logged in to view your profile.</p>
+                            <Link to="/auth/login" className="btn btn-primary">Log In</Link>
+                        </div>
+                    </div>
+                </div>
+            </AppLayout>
+        )
     }
 
     return (
@@ -16,24 +34,45 @@ export default function ProfileIndex() {
                 <div className="container">
                     <div className="profile-header">
                         <div className="profile-avatar">
-                            <span>{user.name.charAt(0)}</span>
+                            <span>{user.username ? user.username.charAt(0).toUpperCase() : 'U'}</span>
                         </div>
                         <div className="profile-info">
-                            <h1>{user.name}</h1>
+                            <h1>{user.username}</h1>
                             <p>{user.email}</p>
-                            <span className="join-date">Member since {user.joined}</span>
+                            <span className="join-date">Member</span>
                         </div>
+                        <button onClick={handleLogout} className="btn btn-outline logout-btn">
+                            Logout
+                        </button>
                     </div>
 
-                    <div className="profile-content">
-                        <div className="coming-soon-card">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            <h2>Account Dashboard</h2>
-                            <p>We're building a comprehensive dashboard for you to manage your orders, addresses, and preferences.</p>
-                            <Link to="/orders" className="btn btn-outline">View Orders</Link>
+                    <div className="profile-grid">
+                        <Link to="/orders" className="dashboard-card">
+                            <div className="card-icon">📦</div>
+                            <h3>My Orders</h3>
+                            <p>Track and view your order history</p>
+                        </Link>
+
+                        <div className="dashboard-card">
+                            <div className="card-icon">❤️</div>
+                            <h3>Wishlist</h3>
+                            <p>View your saved products</p>
+                            {/* Wishlist page isn't routed yet, but context exists. 
+                                Ideally we'd have a /wishlist route. 
+                                For now, this is a placeholder or we can add the route.
+                            */}
+                        </div>
+
+                        <div className="dashboard-card">
+                            <div className="card-icon">📍</div>
+                            <h3>Addresses</h3>
+                            <p>Manage your shipping addresses</p>
+                        </div>
+
+                        <div className="dashboard-card">
+                            <div className="card-icon">⚙️</div>
+                            <h3>Settings</h3>
+                            <p>Update your account preferences</p>
                         </div>
                     </div>
                 </div>
@@ -42,6 +81,7 @@ export default function ProfileIndex() {
                 .profile-page {
                     padding: var(--spacing-2xl) 0 var(--spacing-3xl);
                     min-height: calc(100vh - 80px - 400px);
+                    background: var(--bg-primary);
                 }
                 
                 .profile-header {
@@ -53,6 +93,7 @@ export default function ProfileIndex() {
                     background: var(--bg-secondary);
                     border-radius: var(--radius-xl);
                     box-shadow: var(--shadow-md);
+                    flex-wrap: wrap;
                 }
                 
                 .profile-avatar {
@@ -69,6 +110,10 @@ export default function ProfileIndex() {
                     box-shadow: var(--shadow-lg);
                 }
                 
+                .profile-info {
+                    flex: 1;
+                }
+
                 .profile-info h1 {
                     font-size: var(--font-size-3xl);
                     margin-bottom: var(--spacing-xs);
@@ -87,31 +132,61 @@ export default function ProfileIndex() {
                     padding: 4px 12px;
                     border-radius: var(--radius-full);
                 }
+
+                .logout-btn {
+                    border-color: var(--danger);
+                    color: var(--danger);
+                }
+                .logout-btn:hover {
+                    background: var(--danger);
+                    color: white;
+                }
                 
-                .coming-soon-card {
+                .profile-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: var(--spacing-xl);
+                }
+
+                .dashboard-card {
+                    background: var(--bg-secondary);
+                    padding: var(--spacing-xl);
+                    border-radius: var(--radius-lg);
+                    box-shadow: var(--shadow-sm);
+                    text-decoration: none;
+                    color: var(--text-primary);
+                    transition: all var(--transition-base);
+                    border: 1px solid var(--border-light);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                }
+
+                .dashboard-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: var(--shadow-md);
+                    border-color: var(--primary);
+                }
+
+                .card-icon {
+                    font-size: 3rem;
+                    margin-bottom: var(--spacing-md);
+                }
+
+                .dashboard-card h3 {
+                    font-size: var(--font-size-lg);
+                    margin-bottom: var(--spacing-xs);
+                }
+
+                .dashboard-card p {
+                    color: var(--text-secondary);
+                    font-size: var(--font-size-sm);
+                }
+
+                .empty-state {
                     text-align: center;
                     padding: var(--spacing-3xl);
-                    border: 2px dashed var(--border-medium);
-                    border-radius: var(--radius-xl);
-                    background: rgba(255,255,255,0.5);
-                }
-                
-                .coming-soon-card svg {
-                    margin: 0 auto var(--spacing-lg);
-                    color: var(--text-muted);
-                }
-                
-                .coming-soon-card h2 {
-                    font-size: var(--font-size-2xl);
-                    margin-bottom: var(--spacing-sm);
-                }
-                
-                .coming-soon-card p {
-                    color: var(--text-secondary);
-                    margin-bottom: var(--spacing-xl);
-                    max-width: 500px;
-                    margin-left: auto;
-                    margin-right: auto;
                 }
             `}</style>
         </AppLayout>
